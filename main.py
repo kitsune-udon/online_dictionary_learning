@@ -12,36 +12,36 @@ def learn(src_img, patch_size, n_samples, k, m):
         xn, yn = w-pw+1, h-ph+1
         x = np.random.randint(xn)
         y = np.random.randint(yn)
-        d = src_img[x:x+pw, y:y+pw].ravel()
+        d = src_img[y:y+ph, x:x+pw].ravel()
         dl.learn(d, params)
     return dl.get_dictionary(params)
 
 def encode(src_img, D, patch_size, m):
-    w, h = src_img.shape
+    h, w = src_img.shape
     pw, ph = patch_size
     k = D.shape[1]
     xn, yn = w/pw, h/ph
-    C = np.zeros((xn, yn, k))
+    C = np.zeros((yn, xn, k))
     for j in xrange(yn):
         for i in xrange(xn):
             print "encode ({}/{})".format(i+j*xn+1, xn*yn)
             x, y = i * pw, j * ph
-            v = src_img[x:x+pw, y:y+ph].ravel()
+            v = src_img[y:y+ph, x:x+pw].ravel()
             c = omp.omp(v, D, m)
-            C[i,j] = c
+            C[j,i] = c
     return C
 
 def decode(C, D, patch_size, m):
-    xn, yn, k = C.shape
+    yn, xn, k = C.shape
     pw, ph = patch_size
-    dst_img = np.zeros((xn*pw, yn*ph))
+    dst_img = np.zeros((yn*ph, xn*pw))
     for j in xrange(yn):
         for i in xrange(xn):
             print "decode ({}/{})".format(i+j*xn+1, xn*yn)
-            c = C[i,j]
+            c = C[j,i]
             v = np.dot(D, c)
             x, y = i * pw, j * ph
-            dst_img[x:x+pw, y:y+ph] = v.reshape(patch_size)
+            dst_img[y:y+ph, x:x+pw] = v.reshape((ph, pw))
     return dst_img
 
 patch_size = (8, 8)
